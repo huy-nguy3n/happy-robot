@@ -1,0 +1,114 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: HappyRobot Inbound Intake Webhook (Step 1)
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 29
+    MemorySize: 256
+
+Parameters:
+  ApiKeyValue:
+    Type: String
+    Default: hr-intake-dev-key
+    Description: API key to call the webhook
+  FmcsaWebKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: FMCSA QCMobile API WebKey (set this securely; do not hardcode in code)
+
+Resources:
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      EndpointConfiguration: REGIONAL
+      Cors:
+        AllowMethods: "'POST,GET,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-API-Key'"
+        AllowOrigin: "'*'"
+      Auth:
+        ApiKeyRequired: true
+
+  IntakeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: handler.lambda_handler
+      Environment:
+        Variables:
+          RESULTS_TABLE: !Ref ResultsTable
+          FMCSA_WEBKEY: !Ref FmcsaWebKey
+          FMCSA_BASE_URL: https://mobile.fmcsa.dot.gov/qc/services
+          RESULT_TTL_SECONDS: 86400
+          FMCSA_MAX_RETRIES: "0"
+          FMCSA_BACKOFF_SECONDS: "0.75"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ResultsTable
+      Events:
+        PostIntake:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /intake
+            Method: post
+            Auth:
+              ApiKeyRequired: true
+        GetResult:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /intake/{request_id}
+            Method: get
+            Auth:
+              ApiKeyRequired: true
+
+  ApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Name: HappyRobotIntakeKey
+      Enabled: true
+      Value: !Ref ApiKeyValue
+
+  UsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn:
+      - ApiprodStage
+    Properties:
+      UsagePlanName: IntakePlan
+      ApiStages:
+        - ApiId: !Ref Api
+          Stage: prod
+
+  UsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref UsagePlan
+
+  ResultsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}-results"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: request_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: request_id
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+Outputs:
+  IntakeUrl:
+    Description: POST this URL from HappyRobot
+    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/prod/intake"
+  GetResultUrlTemplate:
+    Description: GET result by request_id
+    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/prod/intake/{request_id}"

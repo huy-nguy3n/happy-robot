@@ -1,0 +1,39 @@
+# AWS SAM build artifacts
+.aws-sam/
+samconfig.toml
+
+# Python cache and build
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Virtual environments and local env files
+.venv/
+venv/
+.env
+.env.*
+.python-version
+
+# Test/coverage caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage.xml
+htmlcov/
+.coverage*
+.cache/
+
+# Editors/IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
