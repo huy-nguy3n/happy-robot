@@ -1,0 +1,20 @@
+{
+  "resource": "/intake",
+  "path": "/intake",
+  "httpMethod": "POST",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "multiValueHeaders": {},
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "requestContext": {
+    "resourcePath": "/intake",
+    "httpMethod": "POST",
+    "path": "/prod/intake"
+  },
+  "body": "{\n    \"mc_number\": \"MC123456\",\n    \"origin\": \"Chicago, IL\",\n    \"destination\": \"Dallas, TX\",\n    \"pickup_datetime\": \"2025-08-22\",\n    \"equipment_type\": \"Dry Van\"\n  }",
+  "isBase64Encoded": false
+}

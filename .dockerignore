@@ -1,0 +1,37 @@
+# Docker build context exclusions
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.venv/
+venv/
+
+# Git & IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# SAM/Build artifacts
+.aws-sam/
+.gradle/
+
+events/
+node_modules/
+.DS_Store
+
+# Secrets and overrides
+.env
+.env.*
+docker-compose.override.yml
+docker-compose.*.local.yml
+
+# Logs and archives
+logs/
+*.log
+*.tar
+
+# Misc
+.python-version

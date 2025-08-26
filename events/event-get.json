@@ -1,0 +1,18 @@
+{
+  "resource": "/intake/{request_id}",
+  "path": "/intake/REPLACE_WITH_REQUEST_ID",
+  "httpMethod": "GET",
+  "headers": {},
+  "multiValueHeaders": {},
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "pathParameters": {"request_id": "REPLACE_WITH_REQUEST_ID"},
+  "stageVariables": null,
+  "requestContext": {
+    "resourcePath": "/intake/{request_id}",
+    "httpMethod": "GET",
+    "path": "/prod/intake/REPLACE_WITH_REQUEST_ID"
+  },
+  "body": null,
+  "isBase64Encoded": false
+}

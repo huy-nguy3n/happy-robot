@@ -34,6 +34,11 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Docker and local overrides
+docker-compose.override.yml
+docker-compose.*.local.yml
+*.tar
+
 # Logs
 logs/
 *.log

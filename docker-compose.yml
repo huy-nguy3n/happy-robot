@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  happyrobot:
+    build: .
+    image: happyrobot-lambda:latest
+    ports:
+      - "9000:8080"
+    env_file:
+      - .env
+    # Lambda base image expects the handler as the command
+    command: ["handler.lambda_handler"]

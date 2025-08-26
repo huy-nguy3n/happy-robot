@@ -239,4 +239,29 @@
     "weight": "30000 lbs",
     "commodity": "Paper Goods"
   }
+  ,
+  {
+    "load_id": "LD0021",
+    "origin": "New York, NY",
+    "destination": "Boston, MA",
+    "pickup_date": "2025-08-22",
+    "delivery_date": "2025-08-23",
+    "equipment_type": "dry van",
+    "rate": 960,
+    "miles": 215,
+    "weight": "38000 lbs",
+    "commodity": "Retail Goods"
+  },
+  {
+    "load_id": "LD0022",
+    "origin": "New York, NY",
+    "destination": "Boston, MA",
+    "pickup_date": "2025-08-22",
+    "delivery_date": "2025-08-23",
+    "equipment_type": "dry van",
+    "rate": 980,
+    "miles": 215,
+    "weight": "39000 lbs",
+    "commodity": "Retail Goods"
+  }
 ]

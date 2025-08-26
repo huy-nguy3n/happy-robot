@@ -1,0 +1,2 @@
+# Runtime dependencies for the Lambda container image
+boto3>=1.28,<2
