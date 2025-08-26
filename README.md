@@ -4,6 +4,7 @@ An inbound webhook for HappyRobot that:
 - Validates and normalizes an MC number via FMCSA
 - Matches inbound requests to demo loads
 - Persists results to DynamoDB (in AWS)
+- View workflow here: https://v2.platform.happyrobot.ai/fde-huy/workflow/qa4zd2h1iw0a/editor/k71263xiq5bb
 
 This README shows how to:
 - Recreate a local development environment and run the same commands
@@ -144,7 +145,16 @@ Look for `IntakeUrl` and `GetResultUrlTemplate`.
 ---
 
 ## Access the deployment
-
+ 
+You can access and manage the deployed workflow via the HappyRobot Platform:
+https://v2.platform.happyrobot.ai/fde-huy/workflow/qa4zd2h1iw0a/editor/k71263xiq5bb
+ 
+- Configure AI agent prompts and HTTP GET/POST request settings in the Editor.
+- Publish the workflow.
+- Test after publishing using:
+   - Generate Output Schema to validate/preview the response structure.
+   - Web Call Trigger to invoke the workflow endpoint and test AI agent functionalities.
+ 
 Assume the following from stack outputs:
 - Intake URL (POST): `https://{restapiid}.execute-api.{region}.amazonaws.com/prod/intake`
 - Get URL template (GET): `https://{restapiid}.execute-api.{region}.amazonaws.com/prod/intake/{request_id}`
