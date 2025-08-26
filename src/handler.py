@@ -16,12 +16,13 @@ REQUIRED = [
     "equipment_type",
 ]
 
-# Optional fields we add to after the Inbound Call (POST with request_id)
+# Optional fields for post-intake updates (via PUT, or legacy POST with request_id)
 OPTIONAL = [
     "delivery_datetime",
     "carrier_name",
     "rate_offer",
     "counter_offer",
+    "accepted_offer",
     "outcome",
     "sentiment",
 ]
@@ -41,7 +42,7 @@ def _resp(status, body):
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Headers": "Content-Type,X-API-Key",
-            "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+            "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT",
         },
         "body": json.dumps(body, default=_json_default)
     }
@@ -82,18 +83,18 @@ def _compute_result(intake: dict, request_id: str):
 def lambda_handler(event, context):
     """AWS Lambda entry point (API Gateway proxy integration compatible).
 
-    Supports three flows:
+    Supports four flows:
     1) CORS preflight (OPTIONS): returns 200 with headers.
     2) GET /{request_id} or ?request_id=... : fetch previously saved result.
-    3) POST:
-    a. With `request_id` -> partial update of OPTIONAL intake fields.
-    b. Without `request_id` -> create new record; requires all REQUIRED fields.
+    3) PUT /intake: partial update of OPTIONAL intake fields (preferred for updates).
+    4) POST /intake: create new record (requires all REQUIRED fields). If a `request_id` is
+       provided in POST, it will be treated as an update for backward compatibility.
 
 
     Request/Response (high level):
     • GET success -> { ok: True, result: <saved item> }
     • POST create -> { ok: True, request_id, received_at, summary }
-    • POST update -> { ok: True, request_id, updated_at }
+    • PUT update -> { ok: True, request_id, updated_at }
     • Errors -> { ok: False, error: "..." [, errors: {field: reason} ] }
     """
     method = (event.get("httpMethod") or "").upper()
@@ -110,6 +111,34 @@ def lambda_handler(event, context):
         if not item:
             return _resp(404, {"ok": False, "error": "Not found"})
         return _resp(200, {"ok": True, "result": item})
+
+    # PUT: update/enrichment flow (same semantics as legacy POST-with-request_id)
+    if method == "PUT":
+        try:
+            body = json.loads(event.get("body") or "{}")
+        except json.JSONDecodeError:
+            return _resp(400, {"ok": False, "error": "Invalid JSON"})
+
+        req_id = str(body.get("request_id") or "").strip()
+        if not req_id:
+            return _resp(400, {"ok": False, "error": "Invalid request_id"})
+        existing = RESULT_REPO.get(req_id)
+        if not existing:
+            return _resp(404, {"ok": False, "error": "Not found"})
+
+        # Collect provided optional fields to merge under result.intake
+        updates = {k: body[k] for k in OPTIONAL if k in body}
+        if not updates:
+            return _resp(400, {"ok": False, "error": "No updatable fields provided"})
+
+        existing_intake = existing.get("intake") or {}
+        existing_intake.update(updates)
+        existing["intake"] = existing_intake
+        existing["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+        if not RESULT_REPO.save(req_id, existing):
+            return _resp(500, {"ok": False, "error": "Failed to save update"})
+        return _resp(200, {"ok": True, "request_id": req_id, "updated_at": existing["updated_at"]})
 
     # Default to POST
     try:

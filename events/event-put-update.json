@@ -1,0 +1,20 @@
+{
+  "resource": "/intake",
+  "path": "/intake",
+  "httpMethod": "PUT",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "multiValueHeaders": {},
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "requestContext": {
+    "resourcePath": "/intake",
+    "httpMethod": "PUT",
+    "path": "/prod/intake"
+  },
+  "body": "{\n  \"request_id\": \"REPLACE_WITH_REQUEST_ID\",\n  \"rate_offer\": 1500,\n  \"accepted_offer\": 1600,\n  \"outcome\": \"accepted\"\n}",
+  "isBase64Encoded": false
+}

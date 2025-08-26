@@ -15,7 +15,7 @@ This README shows how to:
 
 ## Repository layout
 
-- `src/handler.py` — Lambda entry point (OPTIONS/GET/POST). Validation, orchestration, CORS.
+- `src/handler.py` — Lambda entry point (OPTIONS/GET/POST/PUT). Validation, orchestration, CORS.
 - `src/services/matching_service.py` — exact-match rules and response shape for matches.
 - `src/clients/fmcsa_client.py` — FMCSA verification client (env-configured).
 - `src/repos/load_repo.py` — local demo loads reader.
@@ -96,10 +96,13 @@ Expected 200 with a body containing a new `request_id`, `received_at`, and a `su
 
 Base path: from CloudFormation/SAM outputs (see "Access the deployment"). CORS enabled, API key required.
 
-- POST `/intake`
+- POST `/intake` (create)
   - Required JSON body fields: `mc_number`, `origin`, `destination`, `pickup_datetime`, `equipment_type`
-  - Response (create): `{ ok: true, request_id, received_at, summary: { mc_valid, matches_count, status } }`
-  - Response (update: include `request_id` and any of: `delivery_datetime`, `carrier_name`, `rate_offer`, `counter_offer`, `outcome`, `sentiment`): `{ ok: true, request_id, updated_at }`
+  - Response: `{ ok: true, request_id, received_at, summary: { mc_valid, matches_count, status } }`
+
+- PUT `/intake` (update)
+  - Include `request_id` and any of: `delivery_datetime`, `carrier_name`, `rate_offer`, `counter_offer`, `accepted_offer`, `outcome`, `sentiment`
+  - Response: `{ ok: true, request_id, updated_at }`
 
 - GET `/intake/{request_id}`
   - Response: `{ ok: true, result: <full saved document> }`
@@ -149,14 +152,14 @@ Look for `IntakeUrl` and `GetResultUrlTemplate`.
 You can access and manage the deployed workflow via the HappyRobot Platform:
 https://v2.platform.happyrobot.ai/fde-huy/workflow/qa4zd2h1iw0a/editor/k71263xiq5bb
  
-- Configure AI agent prompts and HTTP GET/POST request settings in the Editor.
+- Configure AI agent prompts and HTTP GET/POST/PUT request settings in the Editor.
 - Publish the workflow.
 - Test after publishing using:
    - Generate Output Schema to validate/preview the response structure.
    - Web Call Trigger to invoke the workflow endpoint and test AI agent functionalities.
  
 Assume the following from stack outputs:
-- Intake URL (POST): `https://{restapiid}.execute-api.{region}.amazonaws.com/prod/intake`
+- Intake URL (POST/PUT): `https://{restapiid}.execute-api.{region}.amazonaws.com/prod/intake`
 - Get URL template (GET): `https://{restapiid}.execute-api.{region}.amazonaws.com/prod/intake/{request_id}`
 - API Key: the `ApiKeyValue` you provided at deploy time
 
@@ -186,8 +189,8 @@ Invoke-RestMethod -Uri $GETURL -Method Get -Headers @{ 'x-api-key'=$APIKEY } | C
 
 Update (optional fields):
 ```powershell
-$update = @{ request_id=$REQID; rate_offer=1500; outcome='accepted' } | ConvertTo-Json
-Invoke-RestMethod -Uri $INTAKE -Method Post -Headers @{ 'x-api-key'=$APIKEY; 'Content-Type'='application/json' } -Body $update | ConvertTo-Json -Depth 6
+$update = @{ request_id=$REQID; rate_offer=1500; accepted_offer=1600; outcome='accepted' } | ConvertTo-Json
+Invoke-RestMethod -Uri $INTAKE -Method Put -Headers @{ 'x-api-key'=$APIKEY; 'Content-Type'='application/json' } -Body $update | ConvertTo-Json -Depth 6
 ```
 
 curl equivalents:
@@ -195,6 +198,7 @@ curl equivalents:
 APIKEY='hr-intake-dev-key'
 INTAKE='https://{restapiid}.execute-api.{region}.amazonaws.com/prod/intake'
 
+# Create
 curl -s -H "x-api-key: $APIKEY" -H 'Content-Type: application/json' \
   -d '{"mc_number":"MC123456","origin":"Chicago, IL","destination":"Dallas, TX","pickup_datetime":"2025-08-22","equipment_type":"Dry Van"}' \
   "$INTAKE" | jq .
@@ -202,6 +206,11 @@ curl -s -H "x-api-key: $APIKEY" -H 'Content-Type: application/json' \
 REQID=<paste-request-id>
 GETURL="https://{restapiid}.execute-api.{region}.amazonaws.com/prod/intake/$REQID"
 curl -s -H "x-api-key: $APIKEY" "$GETURL" | jq .
+
+# Update (PUT)
+curl -s -H "x-api-key: $APIKEY" -H 'Content-Type: application/json' -X PUT \
+  -d "{\"request_id\":\"$REQID\",\"rate_offer\":1500,\"accepted_offer\":1600,\"outcome\":\"accepted\"}" \
+  "$INTAKE" | jq .
 ```
 
 ---
